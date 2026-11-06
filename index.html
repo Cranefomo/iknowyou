@@ -374,8 +374,16 @@
   function parseUA(ua){
     var os = 'Unknown', browser = 'Unknown', m;
     var isIPadDesktop = /Macintosh/.test(ua) && navigator.maxTouchPoints > 1;
-    if (/iPhone/.test(ua)) { m = ua.match(/OS (\d+)[_.](\d+)/); os = 'iPhone, iOS ' + (m ? m[1] + '.' + m[2] : ''); }
-    else if (/iPad/.test(ua) || isIPadDesktop) { m = ua.match(/OS (\d+)[_.](\d+)/); os = 'iPad' + (m ? ', iPadOS ' + m[1] + '.' + m[2] : ''); }
+    if (/iPhone|iPad/.test(ua) || isIPadDesktop) {
+      // Since iOS 26 Apple freezes the OS version in the user agent at 18.x,
+      // but Safari's own version matches the real iOS version (Safari 27 = iOS 27).
+      m = ua.match(/OS (\d+)[_.](\d+)/);
+      var sv = ua.match(/Version\/(\d+)/);
+      var osv = m ? m[1] + '.' + m[2] : '';
+      if (sv && +sv[1] >= 26) osv = sv[1];
+      else if (m && +m[1] === 18 && +m[2] >= 6) osv = '';   // frozen value, real version unknown
+      os = /iPhone/.test(ua) ? 'iPhone' + (osv ? ', iOS ' + osv : '') : 'iPad' + (osv ? ', iPadOS ' + osv : '');
+    }
     else if (/Android/.test(ua)) { m = ua.match(/Android (\d+(\.\d+)?)/); os = 'Android ' + (m ? m[1] : ''); }
     else if (/Windows NT 10/.test(ua)) os = 'Windows 10 or 11';
     else if (/Windows/.test(ua)) os = 'Windows';
