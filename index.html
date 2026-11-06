@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>this website already knows you</title>
+<meta name="description" content="Open it. Don't click anything. See what every website can see about you the second you land.">
+<meta property="og:title" content="this website already knows you">
+<meta property="og:description" content="Open it. Don't click anything. See what every website can see about you.">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='6' fill='%23ff3b3b'/%3E%3C/svg%3E">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{--bg:#050805;--panel:#0a110b;--line:#12301a;--g:#00ff66;--gd:#0f9a45;--w:#e9ece9;--m:#7b8a7f;--r:#ff3b3b}
+  body{background:var(--bg);color:var(--w);font-family:ui-monospace,'SF Mono',Menlo,Consolas,'Courier New',monospace;
+    min-height:100vh;padding:1.5rem 1rem 3rem;display:flex;flex-direction:column;align-items:center}
+  .wrap{width:100%;max-width:640px}
+  .live{display:inline-flex;align-items:center;gap:.45rem;font-size:.72rem;letter-spacing:.15em;color:var(--r);margin-bottom:1rem}
+  .live i{width:8px;height:8px;border-radius:50%;background:var(--r);animation:blink 1s infinite}
+  @keyframes blink{50%{opacity:.15}}
+  h1{font-size:clamp(1.6rem,6vw,2.4rem);line-height:1.15;color:var(--g);font-weight:800;letter-spacing:-.02em}
+  h1 span{color:var(--w)}
+  .sub{color:var(--m);font-size:.9rem;margin:.75rem 0 1.5rem;line-height:1.5}
+  .term{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .bar{display:flex;gap:6px;padding:.6rem .8rem;border-bottom:1px solid var(--line);align-items:center}
+  .bar b{width:10px;height:10px;border-radius:50%;background:#1c2a1f}
+  .bar span{margin-left:auto;font-size:.7rem;color:var(--m)}
+  #out{padding:.9rem .9rem 1rem;min-height:220px}
+  .row{display:grid;grid-template-columns:7.2rem 1fr;gap:.25rem .8rem;padding:.42rem 0;border-bottom:1px dashed #0f2215;
+    font-size:.86rem;opacity:0;transform:translateY(4px);transition:all .25s}
+  .row.on{opacity:1;transform:none}
+  .row:last-child{border-bottom:none}
+  .k{color:var(--m)}
+  .v{color:var(--w);word-break:break-word}
+  .v.r{color:var(--r);font-weight:700}
+  .v.g{color:var(--g)}
+  .note{grid-column:2;font-size:.72rem;color:var(--m);margin-top:-.1rem}
+  .mask{cursor:pointer;border-bottom:1px dotted var(--m)}
+  .cursor{display:inline-block;width:.55rem;height:1rem;background:var(--g);vertical-align:-2px;animation:blink .8s infinite}
+  #anim{position:relative;transition:opacity .35s}
+  #anim canvas{display:block;margin:0 auto}
+  .aover{position:absolute;left:0;right:0;top:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;text-align:center}
+  .aover.bl{align-items:flex-start;justify-content:flex-end;padding:0 0 .4rem .3rem;text-align:left}
+  .aover .big{font-size:1.15rem;font-weight:800;color:var(--w);letter-spacing:.12em;background:rgba(5,8,5,.82);padding:.35rem .7rem;border-radius:6px}
+  .aover .pct{font-size:.85rem;color:var(--g);margin-top:.35rem;background:rgba(5,8,5,.82);padding:.15rem .5rem;border-radius:4px}
+  .aover .coord{font-size:.78rem;color:var(--g);line-height:1.5;background:rgba(5,8,5,.7);padding:.2rem .45rem;border-radius:4px}
+  .aover.lock .big,.aover.lock .coord,.aover.lock .pct{color:var(--r)}
+  .astat{margin-top:.7rem;font-size:.8rem;color:var(--gd);text-align:center;min-height:1.2rem}
+  .astat.lock{color:var(--r);font-weight:800;letter-spacing:.04em}
+  .aprog{height:3px;background:#0f2215;margin-top:.55rem;border-radius:2px;overflow:hidden}
+  .aprog i{display:block;height:100%;width:0;background:var(--g);transition:width .15s linear}
+  .aprog.lock i{background:var(--r)}
+  .fp{margin-top:1.2rem;border:1px solid var(--r);border-radius:10px;padding:1rem;display:none}
+  .fp h2{font-size:.78rem;letter-spacing:.12em;color:var(--r);margin-bottom:.5rem}
+  .fp .id{font-size:1.35rem;color:var(--w);font-weight:800;letter-spacing:.05em}
+  .fp p{font-size:.8rem;color:var(--m);margin-top:.5rem;line-height:1.5}
+  .tips{margin-top:1.2rem;display:none}
+  .tips h2{font-size:.78rem;letter-spacing:.12em;color:var(--g);margin-bottom:.6rem}
+  .tips li{list-style:none;font-size:.84rem;color:var(--w);padding:.35rem 0;line-height:1.45}
+  .tips li::before{content:"> ";color:var(--g)}
+  .tips li span{color:var(--m)}
+  .btns{margin-top:1.4rem;display:none;gap:.6rem;flex-direction:column}
+  .btn{display:block;text-align:center;padding:.9rem;border-radius:10px;font-family:inherit;font-size:.95rem;font-weight:800;
+    cursor:pointer;text-decoration:none;border:none}
+  .btn.main{background:var(--g);color:#031006}
+  .btn.alt{background:transparent;color:var(--w);border:1px solid var(--line)}
+  .btn.alt:hover{border-color:var(--g)}
+  .privacy{margin-top:1.2rem;font-size:.72rem;color:var(--m);line-height:1.5;text-align:center}
+  footer{margin-top:1.5rem;font-size:.72rem;color:var(--m);text-align:center}
+  footer a{color:var(--g);text-decoration:none}
+  @media (max-width:420px){.row{grid-template-columns:6rem 1fr;font-size:.8rem}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="live"><i></i>LIVE SCAN</div>
+  <h1>this website already<br><span>knows you.</span></h1>
+  <p class="sub">you didn't click anything. this is what any site can see the second you open it.</p>
+
+  <div class="term">
+    <div class="bar"><b></b><b></b><b></b><span id="clock"></span></div>
+    <div id="out"><div id="anim"></div></div>
+  </div>
+
+  <div class="fp" id="fp">
+    <h2>YOUR BROWSER FINGERPRINT</h2>
+    <div class="id" id="fpid"></div>
+    <p>these details together make an ID like this one. sites use it to recognize you again, often even after you clear cookies or open incognito.</p>
+  </div>
+
+  <div class="tips" id="tips">
+    <h2>HOW TO SHOW LESS</h2>
+    <ul>
+      <li>a VPN hides your real city and internet provider <span>(the IP part)</span></li>
+      <li>Safari and Firefox hide battery, RAM and some hardware details</li>
+      <li>Brave and Tor Browser make your fingerprint much harder to track</li>
+      <li>clearing cookies does not change your fingerprint</li>
+    </ul>
+  </div>
+
+  <div class="btns" id="btns">
+    <button class="btn main" id="share">send this to a friend</button>
+    <a class="btn alt" href="https://x.com/Cranefomo" target="_blank" rel="noopener">𝕏 follow @Cranefomo for more tools like this</a>
+  </div>
+
+  <p class="privacy">this page saves nothing and has no trackers. everything runs in your browser.<br>the only requests go to free IP lookup services (geojs.io, with ipinfo.io, ipapi.is and ipwho.is as backups) to show your location.</p>
+  <footer>built by <a href="https://x.com/Cranefomo" target="_blank" rel="noopener">@Cranefomo</a></footer>
+</div>
+
+<script>
+(function(){
+  var out = document.getElementById('out');
+  var rows = [];
+  function add(k, v, cls, note){ rows.push({k:k, v:v, cls:cls||'', note:note||''}); }
+  function esc(s){ return String(s).replace(/[&<>"]/g, function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+  function timeout(p, ms){ return Promise.race([p, new Promise(function(_,rej){ setTimeout(function(){rej(new Error('timeout'));}, ms); })]); }
+
+  // clock
+  function tick(){ document.getElementById('clock').textContent = new Date().toLocaleTimeString(); }
+  tick(); setInterval(tick, 1000);
+
+  // ---------- collectors ----------
+  function countryName(c){
+    if (!c || c.length !== 2) return c;
+    try { return new Intl.DisplayNames(['en'], {type:'region'}).of(c.toUpperCase()); } catch(e){ return c; }
+  }
+  function stripAS(s){ return s ? String(s).replace(/^AS\d+\s+/, '') : s; }
+  var GEO = [
+    {url:'https://get.geojs.io/v1/ip/geo.json', map:function(d){ return {ip:d.ip, city:d.city, region:d.region, country:d.country, isp:d.organization_name, lat:d.latitude, lon:d.longitude}; }},
+    {url:'https://ipinfo.io/json', map:function(d){ var ll = (d.loc || '').split(','); return {ip:d.ip, city:d.city, region:d.region, country:countryName(d.country), isp:stripAS(d.org), lat:ll[0], lon:ll[1]}; }},
+    {url:'https://api.ipapi.is/', map:function(d){ var L = d.location || {}; return {ip:d.ip, city:d.city || L.city, region:d.region || L.state, country:d.country || L.country, isp:(d.company && d.company.name) || d.company || stripAS(d.asn), lat:d.lat || L.latitude, lon:d.lon || L.longitude}; }},
+    {url:'https://ipwho.is/', map:function(d){ if (d.success === false) throw 0; return {ip:d.ip, city:d.city, region:d.region, country:d.country, isp:d.connection && (d.connection.isp || d.connection.org), lat:d.latitude, lon:d.longitude}; }}
+  ];
+
+  // ---------- search animation ----------
+  var VARIANT = 'target';
+  try { var qa = new URLSearchParams(location.search).get('anim'); if (qa) VARIANT = qa; } catch(e){}
+  var MIN_MS = 2600, LOCK_MS = 900;
+  if (VARIANT === 'target') LOCK_MS = 1700;
+  var STEPS = ['reading your device','tracing your IP','checking where you came from','measuring your screen','counting your fonts','building your fingerprint'];
+  var A = {stopped:false, lock:null, t0:0};
+  var HEX = '0123456789ABCDEF';
+
+  function startAnim(){
+    var box = document.getElementById('anim');
+    box.innerHTML = '<canvas id="ac"></canvas><div class="aover" id="aover"></div>' +
+      '<div class="astat" id="astat"><span id="astep"></span><span class="cursor"></span></div><div class="aprog" id="aprog"><i id="abar"></i></div>';
+    var W = Math.max(240, box.clientWidth);
+    var H = VARIANT === 'matrix' ? 190 : VARIANT === 'target' ? Math.round(W * 0.52) : 220;
+    var c = document.getElementById('ac'), dpr = window.devicePixelRatio || 1;
+    c.width = W * dpr; c.height = H * dpr; c.style.width = W + 'px'; c.style.height = H + 'px';
+    var x = c.getContext('2d'); x.scale(dpr, dpr);
+    var over = document.getElementById('aover'); over.style.height = H + 'px';
+    if (VARIANT === 'matrix') over.innerHTML = '<div class="big" id="abig">DECODING YOU</div><div class="pct" id="apct">0%</div>';
+    if (VARIANT === 'target') { over.className = 'aover bl'; over.innerHTML = '<div class="coord" id="acoord"></div>'; }
+    var stepEl = document.getElementById('astep'), si = 0;
+    stepEl.textContent = STEPS[0];
+    A.stepT = setInterval(function(){ if (A.lock) return; si = (si + 1) % STEPS.length; stepEl.textContent = STEPS[si]; }, 430);
+    var draw = {radar:drawRadar, matrix:drawMatrix, target:drawTarget}[VARIANT] || drawRadar;
+    var st = {};
+    A.t0 = performance.now();
+    function frame(t){
+      if (A.stopped) return;
+      var e = Math.max(0, (t - A.t0) / 1000);
+      draw(x, W, H, e, st);
+      var p = A.lock ? 100 : Math.min(92, (t - A.t0) / MIN_MS * 92);
+      document.getElementById('abar').style.width = p + '%';
+      var pc = document.getElementById('apct'); if (pc) pc.textContent = Math.floor(p) + '%';
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  }
+
+  function lockAnim(loc){
+    var place = loc ? ([loc.city, loc.country].filter(Boolean).join(', ')) : '';
+    A.lock = {text: place ? 'found you: ' + place : 'found your device', loc: loc};
+    var s = document.getElementById('astat'); s.classList.add('lock');
+    document.getElementById('astep').textContent = A.lock.text;
+    document.getElementById('aprog').classList.add('lock');
+    var o = document.getElementById('aover'); o.classList.add('lock');
+    var b = document.getElementById('abig'); if (b) b.textContent = 'FOUND YOU';
+  }
+
+  function finishAnim(loc){
+    var wait = Math.max(0, MIN_MS - (performance.now() - A.t0));
+    return new Promise(function(res){
+      setTimeout(function(){
+        lockAnim(loc);
+        setTimeout(function(){
+          var box = document.getElementById('anim');
+          box.style.opacity = '0';
+          setTimeout(function(){ A.stopped = true; clearInterval(A.stepT); box.remove(); res(); }, 350);
+        }, LOCK_MS);
+      }, wait);
+    });
+  }
+
+  function drawRadar(x, W, H, e, s){
+    x.clearRect(0, 0, W, H);
+    var cx = W / 2, cy = H / 2, R = Math.min(W, H) / 2 - 8;
+    x.strokeStyle = 'rgba(0,255,102,.22)'; x.lineWidth = 1;
+    for (var i = 1; i <= 4; i++) { x.beginPath(); x.arc(cx, cy, R * i / 4, 0, Math.PI * 2); x.stroke(); }
+    x.beginPath(); x.moveTo(cx - R, cy); x.lineTo(cx + R, cy); x.moveTo(cx, cy - R); x.lineTo(cx, cy + R); x.stroke();
+    var a = e * 2.6;
+    for (var k = 0; k < 28; k++) {
+      var aa = a - k * 0.04;
+      x.beginPath(); x.moveTo(cx, cy); x.arc(cx, cy, R, aa - 0.04, aa); x.closePath();
+      x.fillStyle = (A.lock ? 'rgba(255,59,59,' : 'rgba(0,255,102,') + (0.32 * (1 - k / 28)) + ')'; x.fill();
+    }
+    if (!s.blips) {
+      s.blips = [];
+      for (var b = 0; b < 8; b++) s.blips.push({ang: Math.random() * Math.PI * 2, r: R * (0.22 + Math.random() * 0.7), red: b === 0});
+    }
+    s.blips.forEach(function(bp){
+      var d = ((a - bp.ang) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2);
+      var al = bp.red && A.lock ? 1 : Math.max(0, 1 - d / 2.3);
+      if (al <= 0) return;
+      var bx = cx + Math.cos(bp.ang) * bp.r, by = cy + Math.sin(bp.ang) * bp.r;
+      x.fillStyle = bp.red ? 'rgba(255,59,59,' + al + ')' : 'rgba(0,255,102,' + al + ')';
+      x.beginPath(); x.arc(bx, by, bp.red ? 4.5 : 3, 0, Math.PI * 2); x.fill();
+      if (bp.red) {
+        var pulse = (e * 1.6) % 1;
+        x.strokeStyle = 'rgba(255,59,59,' + (1 - pulse) * al + ')';
+        x.beginPath(); x.arc(bx, by, 5 + pulse * 16, 0, Math.PI * 2); x.stroke();
+        if (A.lock) {
+          x.strokeStyle = '#ff3b3b'; x.lineWidth = 1.5;
+          x.beginPath(); x.moveTo(bx - 14, by); x.lineTo(bx - 6, by); x.moveTo(bx + 6, by); x.lineTo(bx + 14, by);
+          x.moveTo(bx, by - 14); x.lineTo(bx, by - 6); x.moveTo(bx, by + 6); x.lineTo(bx, by + 14); x.stroke(); x.lineWidth = 1;
+        }
+      }
+    });
+  }
+
+  function drawMatrix(x, W, H, e, s){
+    var fs = 14, cols = Math.floor(W / fs);
+    if (!s.drops) { s.drops = []; for (var i = 0; i < cols; i++) s.drops.push(Math.floor(Math.random() * -14)); s.last = -1; }
+    if (e - s.last < 0.05) return;
+    s.last = e;
+    x.fillStyle = 'rgba(10,17,11,0.2)'; x.fillRect(0, 0, W, H);
+    x.font = 'bold ' + fs + 'px ui-monospace,Menlo,Consolas,monospace';
+    for (var j = 0; j < cols; j++) {
+      var y = s.drops[j] * fs;
+      if (y > 0) {
+        var r = Math.random();
+        x.fillStyle = A.lock ? '#ff3b3b' : (r < 0.04 ? '#ff3b3b' : r < 0.14 ? '#e9ece9' : '#00ff66');
+        x.fillText(HEX[Math.floor(Math.random() * 16)], j * fs, y);
+      }
+      if (y > H && Math.random() > 0.93) s.drops[j] = 0;
+      s.drops[j]++;
+    }
+  }
+
+  // lightweight dotted world map: 3 degree grid, land bitmask (~1 KB)
+  var LAND = {step:3, top:84, w:120, h:47, bits:'AAAAwL//XwAAAAAAAAAAAAAA+v//PwAPAABYAAAAAADw5OP/PwACAAH8AwwAAAB43QH+HwAAQIj/fwgAwJ/v2x/8DwB4AP3///9l5f///3n8AwD+////////9v///3l4YID/////////4P//HywwAMD7//////9/wMP/H3wAAMTz/////x8GAAD///wBAIb//////wMDAAD+//8BAP7//////wcBAAD8//8CAPz//////w8AAAD8//8AAPj//////wMAAAD8/x8AAP4/7v///wkAAAD8/w8AAA7+3///fwAAAAD4/wcAAG7o////XwQAAADw/wMAAPwA////TwcAAADg/wEAAP7/////nwAAAADgDwEAAP//7///HwAAAABADwAAgP//3///DwAAAAAADgIAwP///vj/BwAAAAAAbhAAwP//f/D5AQAAAAAA+AAAwP//PXD4EAAAAAAAwAAAwP//D2DgAQAAAAAAgPgAgP//H2CAAAAAAAAAAPwAAP//H0AgIAAAAAAAAPwHAM7/DwBwDAAAAAAAAPwHAID/BwBgHwAAAAAAAP4fAID/AwBgFwEAAAAAAP7/AAD/AQDAAA4AAAAAAP7/AQD/AQCAEDwAAAAAAPz/AAD/AwAAACAAAAAAAPx/AAD/EwAAgAsAAAAAAPh/AAD/GQAA4BsAAAAAAPB/AAD/DAAA8B8AAAAAAPA/AAD/DAAA/D8AAAAAAPAPAAB+AAAA/H8AAAAAAPAPAAB+AAAA/H8AAAAAAPAHAAA8AAAA/H8AAAAAAPADAAAcAAAAGDwAAAAAAPgBAAAAAAAAADhAAAAAAHgAAAAAAAAAAABAAAAAAHgAAAAAAAAAAAAwAAAAADgAAAAAAAAAAAAQAAAAABgAAAAAAAAAAAAAAAAAABgAAAAAAAAAAAAAAAAAADAAAAAAAAAAAAAA'};
+  var LANDPTS = null;
+  function landPoints(){
+    if (LANDPTS) return LANDPTS;
+    var raw = atob(LAND.bits), pts = [];
+    for (var k = 0; k < LAND.w * LAND.h; k++) {
+      if ((raw.charCodeAt(k >> 3) >> (k & 7)) & 1) {
+        var i = k % LAND.w, j = Math.floor(k / LAND.w);
+        pts.push([-180 + (i + 0.5) * LAND.step, LAND.top - (j + 0.5) * LAND.step, Math.random() * 6]);
+      }
+    }
+    LANDPTS = pts; return pts;
+  }
+  function easeIO(t){ return t < .5 ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3) / 2; }
+  function lerp(a, b, t){ return a + (b - a) * t; }
+
+  function drawTarget(x, W, H, e, s){
+    x.clearRect(0, 0, W, H);
+    var pts = landPoints();
+    if (!s.init) {
+      s.init = true;
+      s.s0 = W / 360;                 // px per degree, whole world fits width
+      s.cam = {lon: 10, lat: 13, sc: s.s0};
+      s.hop = []; s.hopT = 0; s.lastT = 0;
+      for (var q = 0; q < 12; q++) { var r = pts[Math.floor(Math.random() * pts.length)]; s.hop.push([r[0], r[1]]); }
+      s.cur = s.hop[0].slice();
+    }
+    var L = A.lock && A.lock.loc;
+    var tgt = (L && L.lat !== undefined && L.lon !== undefined && L.lat !== null && !isNaN(+L.lat) && !isNaN(+L.lon) && L.lat !== '' ) ? [+L.lon, +L.lat] : null;
+
+    // camera + crosshair position (lon/lat)
+    var ch;
+    if (A.lock && tgt) {
+      if (!s.lockT) { s.lockT = e; s.from = {lon: s.cam.lon, lat: s.cam.lat, sc: s.cam.sc, ch: s.cur.slice()}; }
+      var k = easeIO(Math.min(1, (e - s.lockT) / 1.1));
+      s.cam.lon = lerp(s.from.lon, tgt[0], k);
+      s.cam.lat = lerp(s.from.lat, tgt[1], k);
+      s.cam.sc = lerp(s.from.sc, s.s0 * 2.8, k);
+      ch = [lerp(s.from.ch[0], tgt[0], Math.min(1, k * 1.4)), lerp(s.from.ch[1], tgt[1], Math.min(1, k * 1.4))];
+    } else if (A.lock) {
+      ch = s.cur;
+    } else {
+      // hop between random land points
+      var seg = 0.42, idx = Math.floor(e / seg), f = easeIO((e % seg) / seg);
+      var a = s.hop[idx % s.hop.length], b = s.hop[(idx + 1) % s.hop.length];
+      ch = [lerp(a[0], b[0], f), lerp(a[1], b[1], f)];
+      s.cur = ch.slice();
+    }
+    var sc = s.cam.sc;
+    function px(lon){ return (lon - s.cam.lon) * sc + W / 2; }
+    function py(lat){ return (s.cam.lat - lat) * sc + H / 2; }
+
+    // dots
+    var dot = Math.max(1.5, sc * LAND.step * 0.42);
+    var rad2 = 10 * 10;
+    for (var n = 0; n < pts.length; n++) {
+      var P = pts[n], X = px(P[0]), Y = py(P[1]);
+      if (X < -dot || X > W + dot || Y < -dot || Y > H + dot) continue;
+      var dl = P[0] - ch[0], dt = P[1] - ch[1], d2 = dl * dl + dt * dt;
+      if (A.lock && tgt && d2 < rad2) {
+        var rk = Math.min(1, (e - (s.lockT || e)) / 0.6);
+        x.fillStyle = 'rgba(255,59,59,' + ((1 - d2 / rad2 * 0.55) * rk) + ')';
+        var rd = dot * 1.25;
+        x.fillRect(X - rd / 2, Y - rd / 2, rd, rd);
+        continue;
+      } else if (!A.lock && d2 < 30) {
+        x.fillStyle = 'rgba(233,236,233,.75)';      // area under the scanner
+      } else {
+        x.fillStyle = 'rgba(0,255,102,' + (0.28 + 0.16 * Math.sin(e * 2 + P[2])) + ')';
+      }
+      x.fillRect(X - dot / 2, Y - dot / 2, dot, dot);
+    }
+
+    // crosshair
+    var cx = px(ch[0]), cy = py(ch[1]);
+    var col = A.lock ? '#ff3b3b' : '#00ff66';
+    x.strokeStyle = A.lock ? 'rgba(255,59,59,.45)' : 'rgba(0,255,102,.35)'; x.setLineDash([3, 4]);
+    x.beginPath(); x.moveTo(0, cy); x.lineTo(W, cy); x.moveTo(cx, 0); x.lineTo(cx, H); x.stroke(); x.setLineDash([]);
+    var sz = A.lock ? 14 : 18, c = sz / 2.4;
+    x.strokeStyle = col; x.lineWidth = 2;
+    [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(function(q){
+      var ox = cx + q[0] * sz, oy = cy + q[1] * sz;
+      x.beginPath(); x.moveTo(ox, oy - q[1] * c); x.lineTo(ox, oy); x.lineTo(ox - q[0] * c, oy); x.stroke();
+    });
+    x.lineWidth = 1;
+    if (A.lock) {
+      var pulse = (e * 1.5) % 1;
+      x.strokeStyle = 'rgba(255,59,59,' + (1 - pulse) + ')';
+      x.beginPath(); x.arc(cx, cy, 4 + pulse * 24, 0, Math.PI * 2); x.stroke();
+      x.fillStyle = '#ff3b3b'; x.beginPath(); x.arc(cx, cy, 3.5, 0, Math.PI * 2); x.fill();
+    }
+
+    // coordinates readout (real position of the crosshair)
+    var co = document.getElementById('acoord');
+    if (co && (e - s.lastT > 0.07 || A.lock)) {
+      s.lastT = e;
+      var lat = ch[1].toFixed(A.lock ? 2 : 4), lon = ch[0].toFixed(A.lock ? 2 : 4);
+      if (A.lock && !tgt) { lat = '--.--'; lon = '--.--'; }
+      var tag = A.lock ? ('LOCKED' + (L && L.country ? ' / ' + esc(String(L.country).toUpperCase()) : '')) : 'TRACING...';
+      co.innerHTML = 'LAT ' + lat + '<br>LON ' + lon + '<br>' + tag;
+    }
+  }
+  function getLocation(){
+    var best = null, i = 0;
+    function tryNext(){
+      if (i >= GEO.length) return Promise.resolve(best);
+      var s = GEO[i++];
+      return timeout(fetch(s.url).then(function(r){ if (!r.ok) throw 0; return r.json(); }), 3500)
+        .then(function(d){
+          var v = s.map(d);
+          if (v && typeof v.isp !== 'string') v.isp = null;
+          if (v && v.city) return v;
+          if (v && v.country && !best) best = v;
+          return tryNext();
+        })
+        .catch(function(){ return tryNext(); });
+    }
+    return tryNext();
+  }
+
+  function parseUA(ua){
+    var os = 'Unknown', browser = 'Unknown', m;
+    var isIPadDesktop = /Macintosh/.test(ua) && navigator.maxTouchPoints > 1;
+    if (/iPhone/.test(ua)) { m = ua.match(/OS (\d+)[_.](\d+)/); os = 'iPhone, iOS ' + (m ? m[1] + '.' + m[2] : ''); }
+    else if (/iPad/.test(ua) || isIPadDesktop) { m = ua.match(/OS (\d+)[_.](\d+)/); os = 'iPad' + (m ? ', iPadOS ' + m[1] + '.' + m[2] : ''); }
+    else if (/Android/.test(ua)) { m = ua.match(/Android (\d+(\.\d+)?)/); os = 'Android ' + (m ? m[1] : ''); }
+    else if (/Windows NT 10/.test(ua)) os = 'Windows 10 or 11';
+    else if (/Windows/.test(ua)) os = 'Windows';
+    else if (/Mac OS X/.test(ua)) os = 'macOS';
+    else if (/CrOS/.test(ua)) os = 'ChromeOS';
+    else if (/Linux/.test(ua)) os = 'Linux';
+
+    if (/Twitter/i.test(ua)) browser = 'X (Twitter) in-app browser';
+    else if (/Instagram/.test(ua)) browser = 'Instagram in-app browser';
+    else if (/FBAN|FBAV/.test(ua)) browser = 'Facebook in-app browser';
+    else if (m = ua.match(/Edg(?:A|iOS)?\/(\d+)/)) browser = 'Edge ' + m[1];
+    else if (m = ua.match(/OPR\/(\d+)/)) browser = 'Opera ' + m[1];
+    else if (m = ua.match(/SamsungBrowser\/(\d+)/)) browser = 'Samsung Internet ' + m[1];
+    else if (m = ua.match(/CriOS\/(\d+)/)) browser = 'Chrome ' + m[1];
+    else if (m = ua.match(/FxiOS\/(\d+)/)) browser = 'Firefox ' + m[1];
+    else if (m = ua.match(/Firefox\/(\d+)/)) browser = 'Firefox ' + m[1];
+    else if (m = ua.match(/Chrome\/(\d+)/)) browser = 'Chrome ' + m[1];
+    else if (m = ua.match(/Version\/(\d+(\.\d+)?).*Safari/)) browser = 'Safari ' + m[1];
+    else if (/Safari/.test(ua)) browser = 'Safari';
+    if (navigator.brave) browser = 'Brave';
+    return {os:os, browser:browser};
+  }
+
+  function getUAData(){
+    if (!navigator.userAgentData || !navigator.userAgentData.getHighEntropyValues) return Promise.resolve(null);
+    return timeout(navigator.userAgentData.getHighEntropyValues(['model','platform','platformVersion']), 1500).catch(function(){return null;});
+  }
+
+  function getGPU(){
+    try {
+      var c = document.createElement('canvas');
+      var gl = c.getContext('webgl') || c.getContext('experimental-webgl');
+      if (!gl) return null;
+      var ext = gl.getExtension('WEBGL_debug_renderer_info');
+      var r = ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER);
+      if (!r) return null;
+      return cleanGPU(r);
+    } catch(e){ return null; }
+  }
+
+  function splitTop(s){
+    var out = [], depth = 0, cur = '';
+    for (var i=0;i<s.length;i++){
+      var ch = s[i];
+      if (ch === '(') depth++;
+      if (ch === ')') depth--;
+      if (ch === ',' && depth === 0) { out.push(cur.trim()); cur = ''; } else cur += ch;
+    }
+    out.push(cur.trim());
+    return out;
+  }
+  function cleanGPU(r){
+    r = String(r);
+    var m = r.match(/^ANGLE \((.*)\)$/);
+    if (m) { var parts = splitTop(m[1]); r = parts[1] || parts[0]; }
+    r = r.replace(/\s*\(0x[0-9a-f]+\)/ig, '')
+         .replace(/\s+Direct3D.*$/i, '')
+         .replace(/\s+vs_\d.*$/i, '')
+         .replace(/^ANGLE Metal Renderer:\s*/i, '');
+    return r.trim();
+  }
+  window.__cleanGPU = cleanGPU;
+
+  function getBattery(){
+    if (!navigator.getBattery) return Promise.resolve(null);
+    return timeout(navigator.getBattery(), 1500).catch(function(){return null;});
+  }
+
+  function countFonts(){
+    var list = ['Arial','Helvetica','Times New Roman','Courier New','Verdana','Georgia','Trebuchet MS','Comic Sans MS','Impact',
+      'Tahoma','Segoe UI','Calibri','Cambria','Consolas','Lucida Console','Palatino Linotype','Garamond','Bookman Old Style',
+      'Futura','Gill Sans','Optima','Avenir','Menlo','Monaco','Roboto','Ubuntu','DejaVu Sans','Noto Sans','Fira Code',
+      'Source Code Pro','Helvetica Neue','San Francisco','Franklin Gothic Medium','Century Gothic','Lucida Sans Unicode',
+      'MS Gothic','Microsoft YaHei','SimSun','Arial Black','Baskerville'];
+    var base = ['monospace','serif','sans-serif'];
+    var span = document.createElement('span');
+    span.style.cssText = 'position:absolute;left:-9999px;font-size:72px;visibility:hidden';
+    span.textContent = 'mmmmmmmmmlli10OQ@#';
+    document.body.appendChild(span);
+    var w = {};
+    base.forEach(function(b){ span.style.fontFamily = b; w[b] = span.offsetWidth + 'x' + span.offsetHeight; });
+    var found = [];
+    list.forEach(function(f){
+      for (var i=0;i<base.length;i++){
+        span.style.fontFamily = '"' + f + '",' + base[i];
+        if ((span.offsetWidth + 'x' + span.offsetHeight) !== w[base[i]]) { found.push(f); break; }
+      }
+    });
+    document.body.removeChild(span);
+    return found;
+  }
+
+  function canvasHash(){
+    try {
+      var c = document.createElement('canvas'); c.width = 240; c.height = 60;
+      var x = c.getContext('2d');
+      x.textBaseline = 'top'; x.font = '16px Arial'; x.fillStyle = '#f60'; x.fillRect(100,1,62,20);
+      x.fillStyle = '#069'; x.fillText('cranefomo fp 😳', 2, 15);
+      x.fillStyle = 'rgba(102,204,0,0.7)'; x.fillText('cranefomo fp 😳', 4, 17);
+      return c.toDataURL();
+    } catch(e){ return ''; }
+  }
+
+  function cyrb53(str){
+    var h1 = 0xdeadbeef, h2 = 0x41c6ce57;
+    for (var i=0, ch; i<str.length; i++){ ch = str.charCodeAt(i); h1 = Math.imul(h1 ^ ch, 2654435761); h2 = Math.imul(h2 ^ ch, 1597334677); }
+    h1 = Math.imul(h1 ^ (h1>>>16), 2246822507) ^ Math.imul(h2 ^ (h2>>>13), 3266489909);
+    h2 = Math.imul(h2 ^ (h2>>>16), 2246822507) ^ Math.imul(h1 ^ (h1>>>13), 3266489909);
+    return (4294967296 * (2097151 & h2) + (h1>>>0)).toString(16).toUpperCase().padStart(14,'0');
+  }
+
+  function referrer(){
+    var r = document.referrer;
+    if (!r) return null;
+    try {
+      var h = new URL(r).hostname.replace(/^www\./,'');
+      if (h === 't.co' || /(^|\.)x\.com$/.test(h) || /twitter\.com$/.test(h)) return 'X (Twitter)';
+      if (/google\./.test(h)) return 'Google';
+      if (/reddit\.com$/.test(h)) return 'Reddit';
+      if (/(^|\.)t\.me$|telegram/.test(h)) return 'Telegram';
+      if (/instagram\.com$/.test(h)) return 'Instagram';
+      if (/facebook\.com$/.test(h)) return 'Facebook';
+      return h;
+    } catch(e){ return null; }
+  }
+
+  // ---------- main ----------
+  startAnim();
+  Promise.all([getLocation(), getUAData(), getBattery()]).then(function(res){
+    var loc = res[0], uad = res[1], bat = res[2];
+    var ua = navigator.userAgent;
+    var p = parseUA(ua);
+
+    if (uad) {
+      if (uad.platform === 'Windows' && uad.platformVersion) {
+        p.os = parseInt(uad.platformVersion, 10) >= 13 ? 'Windows 11' : 'Windows 10';
+      }
+      if (uad.platform === 'Android' && uad.model) p.os = uad.model + ', ' + p.os;
+      if (uad.platform === 'macOS' && uad.platformVersion) p.os = 'macOS ' + uad.platformVersion.split('.').slice(0,2).join('.');
+    }
+
+    // location
+    if (loc) {
+      var place = [loc.city, loc.region, loc.country].filter(Boolean).filter(function(v,i,a){return a.indexOf(v)===i;}).join(', ');
+      add('location', place || 'unknown', 'r', 'from your IP address, approximate');
+      if (loc.isp) add('internet', loc.isp, 'r', 'your internet provider');
+      if (loc.ip) add('ip address', '<span class="mask" data-ip="'+esc(loc.ip)+'">'+esc(maskIP(loc.ip))+' (tap to show)</span>', 'raw');
+    } else {
+      add('location', 'blocked', 'g', 'your network or browser blocked the lookup');
+    }
+
+    var tz = ''; try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone; } catch(e){}
+    if (tz) add('time zone', tz.replace(/_/g,' '), '', 'your clock, no network needed');
+
+    add('device', p.os, 'r');
+    add('browser', p.browser, '');
+
+    var ref = referrer();
+    if (ref) add('came from', ref, 'r', 'the page that sent you here');
+
+    if (bat) {
+      add('battery', Math.round(bat.level*100) + '%' + (bat.charging ? ', charging' : ', not charging'), 'r');
+    } else {
+      add('battery', 'hidden', 'g', 'your browser blocks this. good');
+    }
+
+    var dpr = window.devicePixelRatio || 1;
+    add('screen', screen.width + ' x ' + screen.height + ' at ' + (Math.round(dpr*100)/100) + 'x', '');
+
+    var gpu = getGPU();
+    add('graphics', gpu || 'hidden', gpu ? '' : 'g');
+
+    if (navigator.hardwareConcurrency) add('cpu', navigator.hardwareConcurrency + ' cores', '');
+    if (navigator.deviceMemory) add('memory', (navigator.deviceMemory >= 8 ? '8+ GB' : navigator.deviceMemory + ' GB') + ' RAM', '');
+
+    var conn = navigator.connection;
+    if (conn && conn.effectiveType) add('network', conn.effectiveType.toUpperCase() + (conn.downlink ? ', ~' + conn.downlink + ' Mbps' : ''), '');
+
+    var langs = (navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language]).slice(0,4).join(', ');
+    add('languages', langs, '');
+
+    var dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    add('dark mode', dark ? 'on' : 'off', '');
+
+    var fonts = countFonts();
+    add('fonts', fonts.length + ' detected', '', 'part of your fingerprint');
+
+    var fp = cyrb53([canvasHash(), gpu, screen.width, screen.height, screen.colorDepth, dpr, tz, langs,
+      navigator.hardwareConcurrency, navigator.deviceMemory, navigator.platform, fonts.join(','), navigator.maxTouchPoints].join('|'));
+
+    finishAnim(loc).then(function(){ render(fp); });
+  });
+
+  function maskIP(ip){
+    if (ip.indexOf(':') > -1) return ip.split(':').slice(0,2).join(':') + ':****';
+    var a = ip.split('.'); return a[0] + '.' + a[1] + '.***.***';
+  }
+
+  function render(fp){
+    var i = 0;
+    function next(){
+      if (i >= rows.length) { finish(fp); return; }
+      var r = rows[i++];
+      var div = document.createElement('div');
+      div.className = 'row';
+      var val = r.cls === 'raw' ? r.v : esc(r.v);
+      var cls = r.cls === 'raw' ? '' : r.cls;
+      div.innerHTML = '<div class="k">' + esc(r.k) + '</div><div class="v ' + cls + '">' + val + '</div>' +
+        (r.note ? '<div class="note">' + esc(r.note) + '</div>' : '');
+      out.appendChild(div);
+      requestAnimationFrame(function(){ div.classList.add('on'); });
+      setTimeout(next, 320);
+    }
+    next();
+  }
+
+  function finish(fp){
+    document.getElementById('fpid').textContent = fp.replace(/(.{4})/g, '$1 ').trim();
+    ['fp','tips'].forEach(function(id){ document.getElementById(id).style.display = 'block'; });
+    document.getElementById('btns').style.display = 'flex';
+    var m = document.querySelector('.mask');
+    if (m) m.addEventListener('click', function(){ m.textContent = m.getAttribute('data-ip'); m.classList.remove('mask'); });
+  }
+
+  document.getElementById('share').addEventListener('click', function(){
+    var url = location.href.split('#')[0];
+    var text = 'open this. don\'t click anything.';
+    if (navigator.share) { navigator.share({title:'this website already knows you', text:text, url:url}).catch(function(){}); return; }
+    var btn = this;
+    function done(){ btn.textContent = 'link copied'; setTimeout(function(){ btn.textContent = 'send this to a friend'; }, 2000); }
+    if (navigator.clipboard) navigator.clipboard.writeText(url).then(done, function(){ prompt('copy this link', url); });
+    else prompt('copy this link', url);
+  });
+})();
+</script>
+</body>
+</html>
